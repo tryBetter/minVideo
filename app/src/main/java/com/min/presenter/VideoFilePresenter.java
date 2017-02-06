@@ -12,6 +12,7 @@ import com.min.bean.VideoBean;
 import com.min.model.CacheManager;
 import com.min.mvp.IMVPView;
 import com.min.utils.FileUtils;
+import com.min.view.VideoMainActivity;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -73,7 +74,9 @@ public class VideoFilePresenter extends BasePresenter<IMVPView> {
                 VideoFilePresenter.this.getMvpView().showProgress();
             }
         }
-        File rootFile = Environment.getExternalStorageDirectory();
+//        File rootFile = Environment.getExternalStorageDirectory();
+//        File rootFile = new File("/data/Movies");
+        File rootFile = new File("/storage/emulated/0/Movies");
         if(rootFile != null){
             this.addSubscriberToCompositeSubscription(
                 Observable.just(rootFile)
@@ -258,10 +261,12 @@ public class VideoFilePresenter extends BasePresenter<IMVPView> {
 
                                 @Override
                                 public void onNext(File file) {
-                                    String name = file.getName();
-                                    String size = FileUtils.showFileSize(file.length());
-                                    String path = file.getPath();
-                                    videoBeans.add(new VideoBean(name, path, size));
+                                    if (!file.getPath().equals(VideoMainActivity.loopVideoPath)) {
+                                        String name = file.getName();
+                                        String size = FileUtils.showFileSize(file.length());
+                                        String path = file.getPath();
+                                        videoBeans.add(new VideoBean(name, path, size));
+                                    }
                                 }
                             }
                     )

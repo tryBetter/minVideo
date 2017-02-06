@@ -18,12 +18,16 @@ import android.widget.Toast;
 
 import com.min.base.BaseActivity;
 import com.min.bean.VideoBean;
+import com.min.event.PortEvent;
 import com.min.h3video.R;
 import com.min.model.Model;
 import com.min.mvp.IMVPView;
 import com.min.presenter.VideoFilePresenter;
 import com.min.utils.FileUtils;
 import com.min.utils.RxUtil;
+import com.min.utils.SerialPortType;
+
+import org.greenrobot.eventbus.EventBus;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -44,7 +48,8 @@ public class VideoListActivity extends BaseActivity implements IMVPView {
      * 包含有视频文件夹集合
      **/
     private List<VideoBean> videoBeans = new ArrayList<VideoBean>();
-
+    private int clickIndex ;
+    private String TAG = "VideoListActivity";
 
     /**
      * Fill in layout id
@@ -102,6 +107,7 @@ public class VideoListActivity extends BaseActivity implements IMVPView {
         videoListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                clickIndex = position ;
                 VideoActivity.intentTo(VideoListActivity.this, ((VideoBean)mAdapter.getItem(position)).path, ((VideoBean)mAdapter.getItem(position)).name);
             }
         });
@@ -178,6 +184,91 @@ public class VideoListActivity extends BaseActivity implements IMVPView {
 
     }
 
+    // TODO  接收串口数据
+    @Override
+    protected void onDataReceived(final byte[] buffer, int size) {
+        if(buffer.length<=0){
+            return;
+        }
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                StringBuilder receiveData = new StringBuilder();
+
+                for(int i = 0 ; i < buffer.length;i++){
+                    receiveData.append(Integer.toHexString(buffer[i]&255));
+                }
+                // 以16进制的形式打印所有数据
+                Log.e(TAG,"ReceiveData = "+receiveData.toString());
+
+                //　获取第一位校验数据，通过 &255 运算得到有效数据，去除符号位
+                int checkResult = buffer[0] & 255;
+                //　通过循环异或所有数据
+                for (int j = 1; j < buffer.length - 1; j++) {
+                    checkResult = (buffer[j] & 255) ^ checkResult;
+                }
+
+                if(checkResult == (buffer[7] & 255)){
+                    // 校验成功
+                    PortEvent portEvent = new PortEvent();
+                    portEvent.serialTag = buffer[2] & 255;
+                    switch (buffer[2] & 255){
+                        case 1://获取文件列表
+                            portEvent.portType = SerialPortType.GET_FILE_LIST ;
+                            break;
+                        case 2://获取当前播放的文件
+                            portEvent.portType = SerialPortType.GET_PLAYING_FILE ;
+                            break;
+                        case 3://开始播放   8f 8f 03 08 00 ff ff 0b
+                            portEvent.portType = SerialPortType.PLAY ;
+                            break;
+                        case 4://暂停播放   8f 8f 04 08 00 ff ff 0c
+                            portEvent.portType = SerialPortType.PAUSE ;
+                            break;
+                        case 5://停止播放   8f 8f 05 08 00 ff ff 0d
+                            portEvent.portType = SerialPortType.STOP ;
+                            break;
+                        case 6://播放上一个   8f 8f 06 08 00 ff ff 0e
+                            if(clickIndex>0){
+                                clickIndex--;
+                                portEvent.path = ((VideoBean)mAdapter.getItem(clickIndex)).path;
+                                portEvent.portType = SerialPortType.PREVIOUS ;
+                            }else{
+                                Toast.makeText(VideoListActivity.this,"已经是第一个视频了",Toast.LENGTH_SHORT).show();
+                            }
+                            break;
+                        case 7://播放下一个    8f 8f 07 08 00 ff ff 0f
+                            if(clickIndex < mAdapter.getCount()-1){
+                                clickIndex++;
+                                portEvent.path = ((VideoBean)mAdapter.getItem(clickIndex)).path;
+                                portEvent.portType = SerialPortType.NEXT ;
+                            }else{
+                                Toast.makeText(VideoListActivity.this,"已经是最后一个视频了",Toast.LENGTH_SHORT).show();
+                            }
+                            break;
+                        case 8://播放指定视频
+                            portEvent.portType = SerialPortType.SELECT ;
+                            break;
+                        case 9://返回当前视频
+                            portEvent.portType = SerialPortType.RETURN_VIDEO ;
+                            break;
+                        case 10://返回文件列表
+                            portEvent.portType = SerialPortType.RETURN_LIST ;
+                            break;
+                        case 33://操作失败
+                            portEvent.portType = SerialPortType.OPRATE_FAILE ;
+                            break;
+                        case 34://正确操作
+                            portEvent.portType = SerialPortType.OPRATE_SUCCESS ;
+                            break;
+                    }
+                    EventBus.getDefault().post(portEvent);
+                }
+                Log.e(TAG, "checkResult = " + checkResult);
+            }
+        });
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -227,8 +318,8 @@ public class VideoListActivity extends BaseActivity implements IMVPView {
             }else{
                 viewHolder = (MyViewHolder) convertView.getTag();
             }
-            ((MyViewHolder) viewHolder).tvName.setText(dataList.get(position).name);
-            ((MyViewHolder) viewHolder).tvSize.setText(dataList.get(position).size);
+            viewHolder.tvName.setText(dataList.get(position).name);
+            viewHolder.tvSize.setText(dataList.get(position).size);
             return convertView;
         }
 

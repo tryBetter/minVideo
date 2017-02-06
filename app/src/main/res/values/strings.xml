@@ -80,4 +80,10 @@
 NBA的三十支球队分属两个联盟：东部联盟和西部联盟，每个联盟由三个赛区组成，每个赛区有五支球队。
 NBA在每年的赛程开始之前会安排选秀与热身的季前赛；随后是常规赛，从每年的10月底开始，到次年的4月中旬结束[1]  ；而季后赛（NBA Playoffs）在每年4月下旬开始，在最后决出东西部分区冠军晋级总决赛，七局四胜者为当赛季总冠军，总冠军球队中表现最优秀的球员获得总决赛MVP荣誉。此外，还有全明星赛（All-star Game）作为一项表演性质的赛事存在，时间不定，为期三天。</string>
 
+
+    <string name="error_configuration">Please configure your serial port first.</string>
+    <string name="error_security">You do not have read/write permission to the serial
+		port.</string>
+    <string name="error_unknown">The serial port can not be opened for an unknown
+		reason.</string>
 </resources>

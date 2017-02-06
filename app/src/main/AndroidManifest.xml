@@ -16,7 +16,7 @@
         </activity>
         <activity android:name="com.min.view.VideoListActivity">
         </activity>
-        <activity android:name="com.min.view.DirListActivity">
+        <activity android:name="com.min.view.VideoMainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

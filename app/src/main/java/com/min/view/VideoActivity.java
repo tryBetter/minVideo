@@ -17,27 +17,27 @@
 package com.min.view;
 
 import android.app.Activity;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.VideoView;
 
+import com.min.event.PortEvent;
 import com.min.h3video.R;
 import com.min.model.RecentMediaStorage;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 
 public class VideoActivity extends Activity {
     private static final String TAG = "VideoActivity";
 
     private String mVideoPath;
-    private Uri    mVideoUri;
 
     private VideoView videoView;
 
@@ -59,35 +59,6 @@ public class VideoActivity extends Activity {
 
         mVideoPath = getIntent().getStringExtra("videoPath");
 
-        Intent intent = getIntent();
-        String intentAction = intent.getAction();
-        if (!TextUtils.isEmpty(intentAction)) {
-            if (intentAction.equals(Intent.ACTION_VIEW)) {
-                mVideoPath = intent.getDataString();
-            } else if (intentAction.equals(Intent.ACTION_SEND)) {
-                mVideoUri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-                    String scheme = mVideoUri.getScheme();
-                    if (TextUtils.isEmpty(scheme)) {
-                        Log.e(TAG, "Null unknown ccheme\n");
-                        finish();
-                        return;
-                    }
-                    if (scheme.equals(ContentResolver.SCHEME_ANDROID_RESOURCE)) {
-                        mVideoPath = mVideoUri.getPath();
-                    } else if (scheme.equals(ContentResolver.SCHEME_CONTENT)) {
-                        Log.e(TAG, "Can not resolve content below Android-ICS\n");
-                        finish();
-                        return;
-                    } else {
-                        Log.e(TAG, "Unknown scheme " + scheme + "\n");
-                        finish();
-                        return;
-                    }
-                }
-            }
-        }
-
         if (!TextUtils.isEmpty(mVideoPath)) {
             new RecentMediaStorage(this).saveUrlAsync(mVideoPath);
         }
@@ -96,17 +67,50 @@ public class VideoActivity extends Activity {
 
         android.widget.MediaController mediaController = new android.widget.MediaController(this);
         videoView.setMediaController(mediaController);
-        // prefer mVideoPath
-        if (mVideoPath != null)
-            videoView.setVideoPath(mVideoPath);
-        else if (mVideoUri != null)
-            videoView.setVideoURI(mVideoUri);
-        else {
-            Log.e(TAG, "Null Data Source\n");
-            finish();
-            return;
-        }
+        videoView.setVideoPath(mVideoPath);
         videoView.start();
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void controlVideo(PortEvent event) {
+        switch (event.serialTag){
+            case 1:
+                break;
+            case 2:
+                break;
+            case 3:
+                videoView.start();
+                break;
+            case 4:
+                videoView.pause();
+                break;
+            case 5:
+                videoView.stopPlayback();
+                break;
+            case 6:
+            case 7:
+                if (event.path != null) {
+                    videoView.setVideoPath(event.path);
+                    videoView.start();
+                }
+                break;
+            case 8:
+                break;
+            case 9:
+                break;
+            case 10:
+                break;
+            case 33:
+                break;
+            case 34:
+                break;
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        videoView.resume();
     }
 
     @Override
@@ -116,14 +120,20 @@ public class VideoActivity extends Activity {
     }
 
     @Override
-    protected void onStop() {
+    public void onStart() {
+        super.onStart();
+        EventBus.getDefault().register(this);
+    }
+
+    @Override
+    public void onStop() {
         super.onStop();
         videoView.stopPlayback();
+        EventBus.getDefault().unregister(this);
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-
         return true;
     }
 

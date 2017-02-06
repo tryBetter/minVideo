@@ -11,7 +11,7 @@ import android.widget.Toast;
  * Created by Danxx on 2016/6/15.
  * 基本Activity
  */
-public abstract class BaseActivity extends Activity {
+public abstract class BaseActivity extends SerialPortActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

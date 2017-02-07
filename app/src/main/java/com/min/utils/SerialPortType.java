@@ -20,7 +20,7 @@ public enum SerialPortType {
     OPRATE_FAILE(33),// 操作失败
     OPRATE_SUCCESS(34);// 正确操作
 
-
     SerialPortType(int value) {
+        
     }
 }

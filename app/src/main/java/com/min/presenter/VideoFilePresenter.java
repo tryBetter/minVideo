@@ -261,7 +261,7 @@ public class VideoFilePresenter extends BasePresenter<IMVPView> {
 
                                 @Override
                                 public void onNext(File file) {
-                                    if (!file.getPath().equals(VideoMainActivity.loopVideoPath)) {
+                                    if (!file.getPath().equals(VideoMainActivity.LOOP_VIDEO_PATH)) {
                                         String name = file.getName();
                                         String size = FileUtils.showFileSize(file.length());
                                         String path = file.getPath();

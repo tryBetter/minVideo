@@ -88,7 +88,7 @@ public class FileListFragment extends BaseFragment implements IMVPView {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(getActivity(), VideoListActivity.class);
-                intent.putExtra("path", ((FileBean)mAdapter.getItem(position)).path);
+                intent.putExtra("ROOT_DIR_PATH", ((FileBean)mAdapter.getItem(position)).path);
                 getActivity().startActivity(intent);
             }
 

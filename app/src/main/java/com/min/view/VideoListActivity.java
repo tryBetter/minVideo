@@ -69,7 +69,7 @@ public class VideoListActivity extends BaseActivity implements IMVPView {
     @Override
     protected void initViews(Bundle savedInstanceState) {
         Intent intent = getIntent();
-        path = intent.getStringExtra("path");
+        path = intent.getStringExtra("ROOT_DIR_PATH");
         videoListView = (ListView) findViewById(R.id.videoListView);
         mAdapter = new VideoListAdapter(this);
         videoListView.setAdapter(mAdapter);
